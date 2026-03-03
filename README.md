@@ -1,68 +1,66 @@
-# Local Stock Alert System (Windows + Python)
+# Local Momentum Stock Alert Scanner (Windows + Python)
 
-This project runs a **local stock price alert service** that:
+A lightweight, local-only scanner for semi-professional retail momentum workflows.
 
-- Monitors large-cap U.S. stocks (default set from the S&P 500)
-- Checks prices every **30 minutes**
-- Sends **email alerts**
-- Triggers alerts for:
-  - 📈 **±5% daily move** (vs previous close)
-  - ⚡ **≥10% short-period move** (default: over 2 hours)
+## What it does
 
-It uses **free/low-cost data** from Yahoo Finance via `yfinance` and runs on your own Windows machine (no hosting required).
+- Runs every **30 minutes** during U.S. market hours (**9:30 AM–4:00 PM ET**, weekdays).
+- Monitors **75–150 large-cap U.S. stocks** (default list is a broad S&P 500 subset).
+- Uses free Yahoo data via `yfinance` with **batched downloads**.
+- Sends **one consolidated email per cycle** using SMTP (Gmail App Password supported).
+- Includes anti-spam de-duplication so the same stock/category is alerted once per day.
+- Logs all alerts to CSV.
 
-## 1) Requirements
+> Informational only. Not investment advice.
 
-- Python 3.10+
-- Internet access for market data
-- SMTP email account (Gmail, Outlook, etc.)
+## Signals included per stock
 
-Install dependencies:
+- Current price
+- Daily % move (vs today's open)
+- 30-minute % move (vs previous 30-minute candle)
+- Dollar move
+- 30-day average volume and volume multiplier
+- MA context: 20D / 50D (above or below)
+- RSI(14) with overbought/oversold flags
+- ATR(14), ATR%, and move-vs-ATR comparison
+- 52-week high/low, distance from 52W high, and 52W range position
+- Relative strength vs SPY (stock daily % minus SPY daily %)
+- Intraday positioning (near high / near low)
+
+## Alert logic
+
+A stock is considered only when one or more triggers fire:
+- Daily move >= ±5%
+- 30-minute move >= ±3%
+- Volume >= 2x average
+- Within 2% of 52-week high
+- RSI extreme (>70 or <30)
+
+Quality filter (at least one required):
+- Volume >= 1.5x average
+- Above 50D MA (bullish)
+- Below 50D MA (bearish)
+
+Noise reduction score (default `>= 3`):
+- +2 daily >= 5%
+- +1 30m >= 3%
+- +1 volume >= 2x
+- +1 above 50D MA
+- +1 near 52W high
+
+## Setup
 
 ```bash
 pip install -r requirements.txt
-```
-
-## 2) Configure
-
-Copy and edit env file:
-
-```bash
 copy .env.example .env
 ```
 
-Set values in `.env`:
-
-- `ALERT_EMAIL_TO`: recipient email
-- `ALERT_EMAIL_FROM`: sender email
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`
-- Optionally tune:
-  - `CHECK_INTERVAL_MINUTES` (default `30`)
-  - `DAILY_MOVE_THRESHOLD_PCT` (default `5`)
-  - `SHORT_WINDOW_MINUTES` (default `120`)
-  - `SHORT_MOVE_THRESHOLD_PCT` (default `10`)
-
-## 3) Run
+Fill `.env` values (especially Gmail SMTP + App Password), then run:
 
 ```bash
 python -m stock_alerts.main
 ```
 
-Run in a persistent PowerShell window, or create a Windows Task Scheduler task to start it at logon.
+## Windows usage
 
-## 4) Notes
-
-- Data is best-effort and delayed depending on exchange/data availability.
-- To avoid noisy alerts, the app deduplicates alerts for the same symbol/type/window in memory.
-- If the process restarts, dedup state resets.
-
-## 5) Quick Windows Task Scheduler setup
-
-1. Open **Task Scheduler** → **Create Task**.
-2. Trigger: *At log on* (or on startup).
-3. Action: `Start a program`.
-   - Program/script: `python`
-   - Add arguments: `-m stock_alerts.main`
-   - Start in: path to this repo.
-4. Save.
-
+Run from a persistent shell or Task Scheduler (at logon/startup) so it stays local on your machine.
