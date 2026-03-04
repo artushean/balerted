@@ -1,3 +1,3 @@
 # Documentation
 
-This directory contains the documentation for the Balerted project.
+This folder contains the documentation for the Balerted application.
