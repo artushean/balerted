@@ -9,22 +9,15 @@
 <body>
   <div class="container">
     <h1>Stock Momentum Intelligence</h1>
-
-    <section class="card">
-      <h2>Your Watchlist</h2>
-      <div class="watch-inputs">
-        <input id="ticker" placeholder="Ticker (e.g. AAPL)" />
-        <input id="note" placeholder="Optional note" />
-        <button id="addBtn">Add</button>
-      </div>
-      <ul id="watchlist"></ul>
-    </section>
+    <p id="mode"></p>
+    <p id="lastUpdated"></p>
+    <p id="totalAlerts"></p>
 
     <section class="card">
       <h2>Latest Signals</h2>
       <table>
         <thead>
-          <tr><th>Ticker</th><th>Price</th><th>Daily %</th><th>15m %</th><th>Volume x</th><th>RSI</th><th>ATR ratio</th><th>Score</th></tr>
+          <tr><th>Ticker</th><th>Price</th><th>Daily %</th><th>15m %</th><th>Volume x</th><th>RelStr %</th><th>Conviction</th><th>Score</th></tr>
         </thead>
         <tbody id="rows"></tbody>
       </table>
