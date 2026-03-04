@@ -1,0 +1,8 @@
+body { font-family: Arial, sans-serif; background: #10131a; color: #e6ebff; margin: 0; }
+.container { max-width: 900px; margin: 0 auto; padding: 20px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.card { background: #181d29; border: 1px solid #2a3042; border-radius: 8px; padding: 12px; }
+.badge { display: inline-block; margin-right: 6px; padding: 2px 7px; border-radius: 20px; font-size: 12px; }
+.extreme { background: #8b1e3f; }
+.breakout { background: #2057ff; }
+.strong { background: #15803d; }

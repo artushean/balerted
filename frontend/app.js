@@ -1,48 +1,68 @@
 const API = window.API_BASE || '';
 
-async function getJSON(path, options={}) {
-  const res = await fetch(`${API}${path}`, {headers:{'Content-Type':'application/json'}, ...options});
+async function getJSON(path, options = {}) {
+  const res = await fetch(`${API}${path}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
+  });
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
   return res.json();
 }
 
-function cls(v){ return v >= 0 ? 'pos' : 'neg'; }
-function scoreBadge(score){ if(score>=4) return '<span class="badge high">High</span>'; if(score>=3) return '<span class="badge medium">Medium</span>'; return score; }
-
-async function renderWatchlist(){
-  const watch = await getJSON('/api/watchlist');
-  const ul = document.getElementById('watchlist');
-  ul.innerHTML='';
-  watch.forEach(w=>{
-    const li=document.createElement('li');
-    li.className='watch-item';
-    li.innerHTML=`<span><strong>${w.symbol}</strong> ${w.note||''}</span><button class="small" data-s="${w.symbol}">Remove</button>`;
-    ul.appendChild(li);
-  });
-  ul.querySelectorAll('button').forEach(btn=>btn.onclick=async()=>{await getJSON('/api/watchlist/remove',{method:'POST',body:JSON.stringify({symbol:btn.dataset.s})}); await refresh();});
+function badge(text, cls) {
+  return `<span class="badge ${cls}">${text}</span>`;
 }
 
-async function renderTable(){
-  const data = await getJSON('/api/latest');
+function renderCards(alerts) {
   const tbody = document.getElementById('rows');
-  tbody.innerHTML='';
-  data.forEach(r=>{
-    const tr=document.createElement('tr');
-    if(r.watchlist) tr.className='watch-row';
-    tr.innerHTML=`<td>${r.symbol}${r.watchlist?' ⭐':''}</td><td>${r.price}</td><td class="${cls(r.daily_pct)}">${r.daily_pct}%</td><td class="${cls(r['15m_pct'])}">${r['15m_pct']}%</td><td>${r.volume_mult}</td><td>${r.rsi}</td><td>${r.atr_ratio}</td><td>${scoreBadge(r.score)}</td>`;
+  tbody.innerHTML = '';
+  alerts.forEach((r) => {
+    const tr = document.createElement('tr');
+    const badges = [];
+    if (r.breakout_52w) badges.push('🚀');
+    if (r.breakout_20d) badges.push('📈');
+    if (r.conviction === 'Extreme') badges.push('🔥');
+    if (r.relative_strength > 3) badges.push('💪');
+    tr.innerHTML = `<td>${r.symbol}${r.watchlist ? ' ⭐' : ''} ${badges.join(' ')}</td><td>${r.price}</td><td>${r.daily_pct}%</td><td>${r['15m_pct']}%</td><td>${r.volume_mult}</td><td>${r.relative_strength}</td><td>${r.conviction}</td><td>${r.score}</td>`;
     tbody.appendChild(tr);
   });
 }
 
-async function refresh(){ await renderWatchlist(); await renderTable(); }
+function setMeta(lastUpdated, totalAlerts) {
+  document.getElementById('lastUpdated').textContent = `Last updated: ${lastUpdated || 'N/A'}`;
+  document.getElementById('totalAlerts').textContent = `Total alerts: ${totalAlerts ?? 0}`;
+}
 
-document.getElementById('addBtn').onclick = async()=>{
-  const symbol=document.getElementById('ticker').value.trim();
-  const note=document.getElementById('note').value.trim();
-  if(!symbol) return;
-  await getJSON('/api/watchlist/add',{method:'POST',body:JSON.stringify({symbol,note})});
-  document.getElementById('ticker').value=''; document.getElementById('note').value='';
-  await refresh();
-};
+async function renderFromStatic() {
+  const data = await getJSON('./latest_data.json', { cache: 'no-store' });
+  setMeta(data.last_updated, data.total_alerts);
+  renderCards(data.alerts || []);
+}
 
-refresh();
-setInterval(renderTable, 60000);
+async function renderFromApi() {
+  const data = await getJSON('/api/latest');
+  setMeta(new Date().toISOString(), data.length);
+  renderCards(data || []);
+}
+
+async function refresh() {
+  // GitHub Pages/serverless mode first.
+  try {
+    await renderFromStatic();
+    document.getElementById('mode').innerHTML = badge('Serverless JSON mode', 'medium');
+    return;
+  } catch (_err) {
+    // fallback to local API mode
+  }
+
+  await renderFromApi();
+  document.getElementById('mode').innerHTML = badge('Local API mode', 'high');
+}
+
+refresh().catch((err) => {
+  document.getElementById('rows').innerHTML = `<tr><td colspan="8">Failed to load data: ${err}</td></tr>`;
+});
+
+setInterval(refresh, 60000);

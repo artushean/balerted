@@ -1,0 +1,58 @@
+name: Update Stock Scanner Data
+
+on:
+  schedule:
+    - cron: '*/15 14-21 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check US market hours
+        id: market
+        run: |
+          python - <<'PY'
+from datetime import datetime, time
+from zoneinfo import ZoneInfo
+
+now = datetime.now(ZoneInfo("America/New_York"))
+in_hours = now.weekday() < 5 and time(9, 30) <= now.time() <= time(16, 0)
+with open("$GITHUB_OUTPUT", "a", encoding="utf-8") as f:
+    f.write(f"in_hours={'true' if in_hours else 'false'}\n")
+PY
+
+      - name: Setup Python
+        if: steps.market.outputs.in_hours == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        if: steps.market.outputs.in_hours == 'true'
+        run: pip install -r stock-scanner/requirements.txt
+
+      - name: Run scanner
+        if: steps.market.outputs.in_hours == 'true'
+        working-directory: stock-scanner
+        env:
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+        run: python main.py
+
+      - name: Commit latest data
+        if: steps.market.outputs.in_hours == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp stock-scanner/docs/latest_data.json frontend/latest_data.json
+          git add stock-scanner/docs/latest_data.json frontend/latest_data.json
+          git diff --cached --quiet || git commit -m "chore: update scanner data"
+          git push

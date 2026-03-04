@@ -1,54 +1,29 @@
-# Full-Stack Stock Momentum Scanner
+# Stock Momentum Scanner
 
-Local momentum intelligence app with:
-- **Backend**: FastAPI + yfinance + pandas/numpy + ta + APScheduler
-- **Frontend**: static HTML/CSS/JS (GitHub Pages compatible)
-- **Alerts**: SMTP emails and CSV logging
-- **Watchlist layer**: custom symbols with lower score threshold
+This repo now supports two modes:
 
-## Run locally
+- **Serverless GitHub mode (MVP):** `stock-scanner/` runs from GitHub Actions, writes JSON for static UI, and can send SMTP alerts.
+- **Legacy local prototype:** `stock_alerts/` + `frontend/` can still run against local API for development.
+
+## Frontend integration
+
+`frontend/app.js` is now integrated for both environments:
+
+1. **Serverless mode:** reads `./latest_data.json` (written by workflow from `stock-scanner/docs/latest_data.json`).
+2. **Local mode fallback:** if static JSON is unavailable, it falls back to `/api/latest`.
+
+So yes — FE is integrated with the new scanner output and still backward-compatible.
+
+## Serverless run path
+
+- Workflow: `.github/workflows/update_data.yml`
+- Scanner entrypoint: `stock-scanner/main.py`
+- Scanner JSON output: `stock-scanner/docs/latest_data.json`
+- FE JSON mirror for root static frontend: `frontend/latest_data.json`
+
+## Quick local checks
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn stock_alerts.main:app --reload
-```
-
-Open http://127.0.0.1:8000
-
-## Files
-
-- `medium_cap.txt`, `large_cap.txt`: stock universe files (combined at runtime).
-- `watchlist.json`: watchlist storage.
-- `latest_data.json`: latest scan payload for dashboard/API.
-- `alerts_log.csv`: append-only alert history.
-
-## API
-
-- `GET /api/latest`
-- `GET /api/watchlist`
-- `POST /api/watchlist/add` body: `{ "symbol": "AAPL", "note": "Earnings soon" }`
-- `POST /api/watchlist/remove` body: `{ "symbol": "AAPL" }`
-- `POST /api/scan` manual trigger
-
-## Scheduler & alerts
-
-- Runs every 15 minutes (configurable by `CHECK_INTERVAL_MINUTES`)
-- Restricted to US market hours (9:30–16:00 ET) for scheduled scans
-- Deduplicates same-symbol alerts per trading day
-- Email subject format:
-  - `Momentum Alert – X Market Signals | Y Watchlist Triggers`
-
-## Environment variables
-
-```env
-ALERT_EMAIL_TO=ayoseph815@protonmail.com
-ALERT_EMAIL_FROM=you@example.com
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USERNAME=you@example.com
-SMTP_PASSWORD=app-password
-SMTP_USE_TLS=true
-CHECK_INTERVAL_MINUTES=15
+python -m compileall stock-scanner
+python -m http.server 8000 --directory frontend
 ```
