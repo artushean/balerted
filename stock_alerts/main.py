@@ -66,6 +66,6 @@ def trigger_scan() -> list[dict]:
     return scanner.run_scan(force=True)
 
 
-static_dir = Path(__file__).resolve().parent.parent / "frontend"
+static_dir = Path(__file__).resolve().parent.parent / "docs"
 if static_dir.exists():
-    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="frontend")
+    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="docs")
