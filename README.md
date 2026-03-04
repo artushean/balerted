@@ -1,68 +1,54 @@
-# Local Stock Alert System (Windows + Python)
+# Full-Stack Stock Momentum Scanner
 
-This project runs a **local stock price alert service** that:
+Local momentum intelligence app with:
+- **Backend**: FastAPI + yfinance + pandas/numpy + ta + APScheduler
+- **Frontend**: static HTML/CSS/JS (GitHub Pages compatible)
+- **Alerts**: SMTP emails and CSV logging
+- **Watchlist layer**: custom symbols with lower score threshold
 
-- Monitors large-cap U.S. stocks (default set from the S&P 500)
-- Checks prices every **30 minutes**
-- Sends **email alerts**
-- Triggers alerts for:
-  - 📈 **±5% daily move** (vs previous close)
-  - ⚡ **≥10% short-period move** (default: over 2 hours)
-
-It uses **free/low-cost data** from Yahoo Finance via `yfinance` and runs on your own Windows machine (no hosting required).
-
-## 1) Requirements
-
-- Python 3.10+
-- Internet access for market data
-- SMTP email account (Gmail, Outlook, etc.)
-
-Install dependencies:
+## Run locally
 
 ```bash
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+uvicorn stock_alerts.main:app --reload
 ```
 
-## 2) Configure
+Open http://127.0.0.1:8000
 
-Copy and edit env file:
+## Files
 
-```bash
-copy .env.example .env
+- `medium_cap.txt`, `large_cap.txt`: stock universe files (combined at runtime).
+- `watchlist.json`: watchlist storage.
+- `latest_data.json`: latest scan payload for dashboard/API.
+- `alerts_log.csv`: append-only alert history.
+
+## API
+
+- `GET /api/latest`
+- `GET /api/watchlist`
+- `POST /api/watchlist/add` body: `{ "symbol": "AAPL", "note": "Earnings soon" }`
+- `POST /api/watchlist/remove` body: `{ "symbol": "AAPL" }`
+- `POST /api/scan` manual trigger
+
+## Scheduler & alerts
+
+- Runs every 15 minutes (configurable by `CHECK_INTERVAL_MINUTES`)
+- Restricted to US market hours (9:30–16:00 ET) for scheduled scans
+- Deduplicates same-symbol alerts per trading day
+- Email subject format:
+  - `Momentum Alert – X Market Signals | Y Watchlist Triggers`
+
+## Environment variables
+
+```env
+ALERT_EMAIL_TO=ayoseph815@protonmail.com
+ALERT_EMAIL_FROM=you@example.com
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USERNAME=you@example.com
+SMTP_PASSWORD=app-password
+SMTP_USE_TLS=true
+CHECK_INTERVAL_MINUTES=15
 ```
-
-Set values in `.env`:
-
-- `ALERT_EMAIL_TO`: recipient email
-- `ALERT_EMAIL_FROM`: sender email
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`
-- Optionally tune:
-  - `CHECK_INTERVAL_MINUTES` (default `30`)
-  - `DAILY_MOVE_THRESHOLD_PCT` (default `5`)
-  - `SHORT_WINDOW_MINUTES` (default `120`)
-  - `SHORT_MOVE_THRESHOLD_PCT` (default `10`)
-
-## 3) Run
-
-```bash
-python -m stock_alerts.main
-```
-
-Run in a persistent PowerShell window, or create a Windows Task Scheduler task to start it at logon.
-
-## 4) Notes
-
-- Data is best-effort and delayed depending on exchange/data availability.
-- To avoid noisy alerts, the app deduplicates alerts for the same symbol/type/window in memory.
-- If the process restarts, dedup state resets.
-
-## 5) Quick Windows Task Scheduler setup
-
-1. Open **Task Scheduler** → **Create Task**.
-2. Trigger: *At log on* (or on startup).
-3. Action: `Start a program`.
-   - Program/script: `python`
-   - Add arguments: `-m stock_alerts.main`
-   - Start in: path to this repo.
-4. Save.
-
