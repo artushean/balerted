@@ -1,51 +1,71 @@
 from __future__ import annotations
 
-import logging
-import time
+from pathlib import Path
 
-from .alerts import AlertEngine
+from apscheduler.schedulers.background import BackgroundScheduler
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+
 from .config import load_settings
-from .data_provider import YahooFinanceProvider
-from .emailer import EmailAlerter
+from .scanner import MomentumScanner
+
+settings = load_settings()
+scanner = MomentumScanner(settings)
+scheduler = BackgroundScheduler(timezone="America/New_York")
+
+app = FastAPI(title="Momentum Scanner")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
-def configure_logging() -> None:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s | %(levelname)s | %(message)s",
-    )
+class WatchRequest(BaseModel):
+    symbol: str
+    note: str = ""
 
 
-def run() -> None:
-    configure_logging()
-    settings = load_settings()
-
-    provider = YahooFinanceProvider()
-    alert_engine = AlertEngine(
-        daily_move_threshold_pct=settings.daily_move_threshold_pct,
-        short_window_minutes=settings.short_window_minutes,
-        short_move_threshold_pct=settings.short_move_threshold_pct,
-    )
-    emailer = EmailAlerter(settings=settings)
-
-    interval_seconds = settings.check_interval_minutes * 60
-
-    logging.info("Starting stock alert monitor for %d symbols.", len(settings.symbols))
-
-    while True:
-        for symbol in settings.symbols:
-            try:
-                snapshot = provider.get_snapshot(symbol)
-                events = alert_engine.evaluate(snapshot)
-                for event in events:
-                    logging.info("Alert triggered for %s: %s", event.symbol, event.details)
-                    emailer.send_alert(event)
-            except Exception as exc:  # noqa: BLE001
-                logging.exception("Error processing %s: %s", symbol, exc)
-
-        logging.info("Sleeping for %d minutes.", settings.check_interval_minutes)
-        time.sleep(interval_seconds)
+@app.on_event("startup")
+def startup() -> None:
+    scheduler.add_job(scanner.run_scan, "interval", minutes=settings.scheduler_minutes, kwargs={"force": False})
+    scheduler.start()
+    scanner.run_scan(force=True)
 
 
-if __name__ == "__main__":
-    run()
+@app.on_event("shutdown")
+def shutdown() -> None:
+    scheduler.shutdown(wait=False)
+
+
+@app.get("/api/latest")
+def get_latest() -> list[dict]:
+    return scanner.latest()
+
+
+@app.get("/api/watchlist")
+def get_watchlist() -> list[dict]:
+    return [w.__dict__ for w in scanner.get_watchlist()]
+
+
+@app.post("/api/watchlist/add")
+def add_watch(item: WatchRequest) -> list[dict]:
+    return [w.__dict__ for w in scanner.add_watch(item.symbol, item.note)]
+
+
+@app.post("/api/watchlist/remove")
+def remove_watch(item: WatchRequest) -> list[dict]:
+    return [w.__dict__ for w in scanner.remove_watch(item.symbol)]
+
+
+@app.post("/api/scan")
+def trigger_scan() -> list[dict]:
+    return scanner.run_scan(force=True)
+
+
+static_dir = Path(__file__).resolve().parent.parent / "frontend"
+if static_dir.exists():
+    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="frontend")
