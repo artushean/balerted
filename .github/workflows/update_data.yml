@@ -37,15 +37,18 @@ PY
         if: steps.market.outputs.in_hours == 'true'
         run: pip install -r stock-scanner/requirements.txt
 
-      - name: Run scanner
-        if: steps.market.outputs.in_hours == 'true'
-        working-directory: stock-scanner
-        env:
-          EMAIL_USER: ${{ secrets.EMAIL_USER }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-        run: python main.py
+    - name: Run scanner
+  if: steps.market.outputs.in_hours == 'true'
+  working-directory: stock-scanner
+  env:
+    SMTP_HOST: ${{ secrets.SMTP_HOST }}
+    SMTP_PORT: ${{ secrets.SMTP_PORT }}
+    SMTP_USE_TLS: ${{ secrets.SMTP_USE_TLS }}
+    SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+    SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+    ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
+    ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+  run: python main.py
 
       - name: Commit latest data
         if: steps.market.outputs.in_hours == 'true'
