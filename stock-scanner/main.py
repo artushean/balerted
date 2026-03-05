@@ -17,21 +17,23 @@ def send_email_if_needed(payload: dict) -> None:
     if not alerts:
         return
 
-    email_user = os.getenv("EMAIL_USER")
-    email_password = os.getenv("EMAIL_PASSWORD")
-    smtp_server = os.getenv("SMTP_SERVER")
+    email_user = os.getenv("SMTP_USERNAME") or os.getenv("EMAIL_USER")
+    email_password = os.getenv("SMTP_PASSWORD") or os.getenv("EMAIL_PASSWORD")
+    smtp_server = os.getenv("SMTP_HOST") or os.getenv("SMTP_SERVER")
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    alert_email_from = os.getenv("ALERT_EMAIL_FROM") or email_user
+    alert_email_to = os.getenv("ALERT_EMAIL_TO")
 
-    if not all([email_user, email_password, smtp_server]):
+    if not all([email_user, email_password, smtp_server, alert_email_from, alert_email_to]):
         return
 
     msg = EmailMessage()
     msg["Subject"] = f"Stock Momentum Alerts: {len(alerts)} signal(s)"
-    msg["From"] = email_user
-    msg["To"] = "ayoseph815@protonmail.com"
+    msg["From"] = alert_email_from
+    msg["To"] = alert_email_to
 
-    lines = ["Momentum scanner detected qualifying symbols:\n"]
-    for item in alerts:
+    lines = ["Momentum scanner detected 3%+ qualifying symbols:\n"]
+    for item in alerts[:25]:
         breakout = []
         if item.get("breakout_52w"):
             breakout.append("52-week breakout")
@@ -40,8 +42,8 @@ def send_email_if_needed(payload: dict) -> None:
         breakout_txt = ", ".join(breakout) if breakout else "no breakout"
 
         lines.append(
-            f"- {item['symbol']} | conviction={item['conviction']} | score={item['score']} | "
-            f"RS={item['relative_strength']}% | {breakout_txt}"
+            f"- {item['symbol']} | conviction={item['conviction']} | momentum_score={item['momentum_score']} | "
+            f"daily={item['daily_pct']}% | RS={item['relative_strength']}% | {breakout_txt}"
         )
 
     lines.append("\nGenerated automatically. This message is informational and not investment advice.")
@@ -58,6 +60,7 @@ def main() -> None:
         large_cap_path=str(BASE / "large_cap.txt"),
         medium_cap_path=str(BASE / "medium_cap.txt"),
         watchlist_path=str(BASE / "watchlist.json"),
+        sp500_path=str(BASE / "sp500_symbols.txt"),
     )
     payload = engine.run()
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
