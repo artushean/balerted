@@ -10,40 +10,25 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check US market hours
-        id: market
-        run: |
-          python - <<'PY'
-          from datetime import datetime, time
-          from zoneinfo import ZoneInfo
-
-          now = datetime.now(ZoneInfo("America/New_York"))
-          in_hours = now.weekday() < 5 and time(9, 30) <= now.time() <= time(16, 0)
-
-          with open("$GITHUB_OUTPUT", "a", encoding="utf-8") as f:
-              f.write(f"in_hours={'true' if in_hours else 'false'}\n")
-          PY
-
       - name: Setup Python
-        if: steps.market.outputs.in_hours == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install dependencies
-        if: steps.market.outputs.in_hours == 'true'
         run: pip install -r stock-scanner/requirements.txt
 
       - name: Run scanner
-        if: steps.market.outputs.in_hours == 'true'
         working-directory: stock-scanner
         env:
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USE_TLS: ${{ secrets.SMTP_USE_TLS }}
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
@@ -51,11 +36,9 @@ jobs:
         run: python main.py
 
       - name: Sync root docs JSON
-        if: steps.market.outputs.in_hours == 'true'
         run: cp stock-scanner/docs/latest_data.json docs/latest_data.json
 
       - name: Commit latest data
-        if: steps.market.outputs.in_hours == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
