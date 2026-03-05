@@ -44,19 +44,21 @@ jobs:
         env:
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_USE_TLS: ${{ secrets.SMTP_USE_TLS }}
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
           ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
         run: python main.py
 
+      - name: Sync root docs JSON
+        if: steps.market.outputs.in_hours == 'true'
+        run: cp stock-scanner/docs/latest_data.json docs/latest_data.json
+
       - name: Commit latest data
         if: steps.market.outputs.in_hours == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          cp stock-scanner/docs/latest_data.json frontend/latest_data.json
-          git add stock-scanner/docs/latest_data.json frontend/latest_data.json
+          git add stock-scanner/docs/latest_data.json docs/latest_data.json
           git diff --cached --quiet || git commit -m "chore: update scanner data"
           git push

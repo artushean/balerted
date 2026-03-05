@@ -10,15 +10,31 @@ from .scoring import conviction_from_score, score_signal
 from .sector import fetch_sector_momentum
 
 
+MOMENTUM_MOVE_THRESHOLD = 3.0
+
+
 class ScanEngine:
-    def __init__(self, large_cap_path: str, medium_cap_path: str, watchlist_path: str | None = None) -> None:
+    def __init__(
+        self,
+        large_cap_path: str,
+        medium_cap_path: str,
+        watchlist_path: str | None = None,
+        sp500_path: str | None = None,
+    ) -> None:
         self.large_cap_path = large_cap_path
         self.medium_cap_path = medium_cap_path
         self.watchlist_path = watchlist_path
+        self.sp500_path = sp500_path
         self.fetcher = DataFetcher()
 
     def run(self) -> dict:
-        symbols, watchlist = load_symbols(self.large_cap_path, self.medium_cap_path, self.watchlist_path)
+        symbols, watchlist = load_symbols(
+            self.large_cap_path,
+            self.medium_cap_path,
+            self.watchlist_path,
+            sp500_path=self.sp500_path,
+            max_symbols=500,
+        )
         spy = self.fetcher.fetch_spy_5d()
         spy_5d = five_day_change(spy["Close"]) if not spy.empty else 0.0
 
@@ -54,10 +70,11 @@ class ScanEngine:
                 dist_52 = distance_to_52w_high(price, highs)
                 above_50ma = price > ma50 if ma50 == ma50 else False
 
-                score = score_signal(daily_pct, pct_15m, is_20, is_52, vol_mult, rel, above_50ma)
-                conviction = conviction_from_score(score)
+                momentum_score = score_signal(daily_pct, pct_15m, is_20, is_52, vol_mult, rel, above_50ma)
+                conviction = conviction_from_score(momentum_score)
 
-                if score < 3 and symbol not in watchlist:
+                has_3pct_momentum = daily_pct >= MOMENTUM_MOVE_THRESHOLD or pct_15m >= MOMENTUM_MOVE_THRESHOLD
+                if (not has_3pct_momentum and symbol not in watchlist) or momentum_score < 40:
                     continue
 
                 alerts.append(
@@ -76,18 +93,21 @@ class ScanEngine:
                         "breakout_52w": is_52,
                         "distance_to_52w_high": round(dist_52, 2),
                         "conviction": conviction,
-                        "score": score,
+                        "score": momentum_score,
+                        "momentum_score": momentum_score,
                         "watchlist": symbol in watchlist,
                     }
                 )
             except Exception:
                 continue
 
-        alerts.sort(key=lambda x: (x["conviction"] != "Extreme", -x["score"], -x["daily_pct"]))
+        alerts.sort(key=lambda x: -x["momentum_score"])
 
         return {
             "last_updated": datetime.now(timezone.utc).isoformat(),
             "total_alerts": len(alerts),
+            "scan_universe": len(symbols),
+            "momentum_threshold_pct": MOMENTUM_MOVE_THRESHOLD,
             "alerts": alerts,
             "sector_momentum": fetch_sector_momentum(),
         }

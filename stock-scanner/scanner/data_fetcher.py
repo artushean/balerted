@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
 
 import pandas as pd
 import yfinance as yf
@@ -35,12 +34,24 @@ class DataFetcher:
         return StockData(symbol=symbol, intraday_15m=intraday, daily_6m=daily_6m, daily_5d=daily_5d)
 
 
-def load_symbols(large_cap_path: str, medium_cap_path: str, watchlist_path: str | None = None) -> tuple[list[str], set[str]]:
-    def read_lines(path: str) -> list[str]:
+def load_symbols(
+    large_cap_path: str,
+    medium_cap_path: str,
+    watchlist_path: str | None = None,
+    sp500_path: str | None = None,
+    max_symbols: int = 500,
+) -> tuple[list[str], set[str]]:
+    def read_lines(path: str | None) -> list[str]:
+        if not path:
+            return []
         with open(path, "r", encoding="utf-8") as f:
             return [line.strip().upper() for line in f if line.strip()]
 
-    symbols = set(read_lines(large_cap_path) + read_lines(medium_cap_path))
+    base_symbols = read_lines(sp500_path) if sp500_path else []
+    if not base_symbols:
+        base_symbols = read_lines(large_cap_path) + read_lines(medium_cap_path)
+
+    symbols = set(base_symbols[:max_symbols])
     watchlist: set[str] = set()
 
     if watchlist_path:
