@@ -2,7 +2,7 @@ name: Update Stock Scanner Data
 
 on:
   schedule:
-    - cron: '*/15 14-21 * * 1-5'
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -38,10 +38,16 @@ jobs:
       - name: Sync root docs JSON
         run: cp stock-scanner/docs/latest_data.json docs/latest_data.json
 
+      - name: Sync dashboard data path
+        run: |
+          mkdir -p docs/data stock-scanner/docs/data
+          cp stock-scanner/docs/latest_data.json docs/data/latest_data.json
+          cp stock-scanner/docs/latest_data.json stock-scanner/docs/data/latest_data.json
+
       - name: Commit latest data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add stock-scanner/docs/latest_data.json docs/latest_data.json
+          git add stock-scanner/docs/latest_data.json docs/latest_data.json docs/data/latest_data.json stock-scanner/docs/data/latest_data.json
           git diff --cached --quiet || git commit -m "chore: update scanner data"
           git push
