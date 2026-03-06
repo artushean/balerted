@@ -3,22 +3,74 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Stock Momentum Scanner</title>
+    <title>Momentum Signal Dashboard</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="container">
-      <header class="hero">
+    <main class="dashboard">
+      <header class="header card">
         <h1>Momentum Signal Dashboard</h1>
-        <p class="subtitle">S&P universe scan • 3% momentum detection • 0-100 ranking</p>
-        <div class="meta">
-          <span id="updated"></span>
+        <p>S&amp;P universe scan • 3% momentum detection • 0–100 ranking</p>
+        <div class="meta-line">
           <span id="total"></span>
           <span id="universe"></span>
+          <span id="updated"></span>
         </div>
       </header>
-      <section id="alerts" class="cards"></section>
+
+      <section class="panel card">
+        <div class="panel-head">
+          <h2 id="momentumTitle">Top Momentum Signals</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th>Daily %</th>
+                <th>Relative Strength</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody id="momentumBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="movers-grid">
+        <section class="panel card">
+          <h2>Top Movers</h2>
+          <div class="table-wrap"><table><tbody id="moversBody"></tbody></table></div>
+        </section>
+        <section class="panel card">
+          <h2>Top Gainers in 52 Weeks</h2>
+          <div class="table-wrap"><table><tbody id="gainers52Body"></tbody></table></div>
+        </section>
+        <section class="panel card">
+          <h2>Top Losers in 52 Weeks</h2>
+          <div class="table-wrap"><table><tbody id="losers52Body"></tbody></table></div>
+        </section>
+      </section>
+
+      <section class="panel card">
+        <h2>Top 10 Crypto Movers (24h)</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Symbol</th>
+                <th>Price</th>
+                <th>24h %</th>
+              </tr>
+            </thead>
+            <tbody id="cryptoBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="error" id="errorMessage" hidden>Scanner data unavailable</p>
     </main>
-    <script src="./app.js"></script>
+    <script src="./dashboard.js"></script>
   </body>
 </html>
