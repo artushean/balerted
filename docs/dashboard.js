@@ -47,6 +47,61 @@ function fill52WeekTable(elId, items, fallback) {
     .join('');
 }
 
+function titleizeCategory(key) {
+  return key
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function renderSignalSections(signals = {}) {
+  const container = document.getElementById('signalSections');
+  if (!container) return;
+
+  const categoryOrder = ['top_movers', 'breakouts', 'unusual_volume', 'rsi_reversals', 'small_cap_momentum'];
+  const available = categoryOrder.filter((key) => Array.isArray(signals[key]));
+
+  if (!available.length) {
+    container.innerHTML = '<p>No categorized signal data available.</p>';
+    return;
+  }
+
+  container.innerHTML = available
+    .map((key) => {
+      const items = (signals[key] || []).slice(0, 10);
+      const rows = items.length
+        ? items
+            .map((item) => rowCells([
+              item.symbol,
+              `<span class="${pctClass(item.daily_pct)}">${fmtPct(item.daily_pct)}</span>`,
+              Number(item.volume_mult || 0).toFixed(2),
+              item.conviction_score ?? '--',
+            ]))
+            .join('')
+        : rowCells([`No ${titleizeCategory(key)} signals`]);
+
+      return `
+        <section class="panel card">
+          <h2>${titleizeCategory(key)}</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ticker</th>
+                  <th>Daily %</th>
+                  <th>Vol x</th>
+                  <th>Score</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </section>
+      `;
+    })
+    .join('');
+}
+
 async function loadCryptoTop100() {
   const response = await fetch(
     'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false',
@@ -125,6 +180,7 @@ async function loadData() {
     fill52WeekTable('gainers52Body', sortedBy52wDistance.slice(0, 10), 'No 52-week gainers');
     fill52WeekTable('losers52Body', sortedBy52wDistance.reverse().slice(0, 10), 'No 52-week losers');
 
+    renderSignalSections(scannerRes.signals || {});
     renderCryptoTable(crypto);
   } catch (error) {
     document.getElementById('momentumBody').innerHTML = '';
@@ -132,6 +188,7 @@ async function loadData() {
     document.getElementById('gainers52Body').innerHTML = '';
     document.getElementById('losers52Body').innerHTML = '';
     document.getElementById('cryptoBody').innerHTML = '';
+    document.getElementById('signalSections').innerHTML = '';
     errorMessage.hidden = false;
   }
 }
