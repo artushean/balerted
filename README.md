@@ -9,7 +9,7 @@ Serverless momentum scanner that runs in GitHub Actions and publishes a static d
 - Ranks signals with a 0-100 momentum score.
 - Sends SMTP email alerts for qualifying signals.
 - Publishes a modern static dashboard in `docs/` and `stock-scanner/docs/`.
-- Auto-runs every 15 minutes during US market hours via GitHub Actions.
+- Auto-runs every 30 minutes via GitHub Actions.
 
 ## Serverless run path
 
