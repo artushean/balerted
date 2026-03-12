@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-03-12T20:05:36.912300+00:00",
+  "last_updated": "2026-03-12T21:18:59.234336+00:00",
   "total_alerts": 0,
   "scan_universe": 491,
   "momentum_threshold_pct": 3.0,
@@ -23,7 +23,7 @@
     },
     {
       "sector": "XLU",
-      "weekly_pct": -0.8
+      "weekly_pct": -0.85
     },
     {
       "sector": "XLP",
@@ -31,7 +31,7 @@
     },
     {
       "sector": "XLK",
-      "weekly_pct": -1.73
+      "weekly_pct": -1.67
     },
     {
       "sector": "XLB",
@@ -39,11 +39,11 @@
     },
     {
       "sector": "XLV",
-      "weekly_pct": -2.43
+      "weekly_pct": -2.44
     },
     {
       "sector": "XLC",
-      "weekly_pct": -2.67
+      "weekly_pct": -2.68
     },
     {
       "sector": "XLRE",
@@ -51,7 +51,7 @@
     },
     {
       "sector": "XLI",
-      "weekly_pct": -3.98
+      "weekly_pct": -3.96
     },
     {
       "sector": "XLY",
@@ -59,7 +59,7 @@
     },
     {
       "sector": "XLF",
-      "weekly_pct": -4.67
+      "weekly_pct": -4.68
     }
   ]
 }
