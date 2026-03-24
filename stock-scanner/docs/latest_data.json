@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-03-24T20:17:30.587203+00:00",
+  "last_updated": "2026-03-24T22:13:41.409160+00:00",
   "total_alerts": 0,
   "scan_universe": 491,
   "momentum_threshold_pct": 3.0,
@@ -55,7 +55,7 @@
     },
     {
       "sector": "XLU",
-      "weekly_pct": -4.31
+      "weekly_pct": -4.33
     },
     {
       "sector": "XLRE",
