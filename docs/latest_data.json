@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-05-27T20:25:34.229637+00:00",
+  "last_updated": "2026-05-27T22:26:25.663616+00:00",
   "total_alerts": 0,
   "scan_universe": 491,
   "momentum_threshold_pct": 3.0,
@@ -59,7 +59,7 @@
     },
     {
       "sector": "XLE",
-      "weekly_pct": -7.03
+      "weekly_pct": -7.02
     }
   ]
 }
