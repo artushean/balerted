@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-06-17T07:40:11.084981+00:00",
+  "last_updated": "2026-06-17T12:22:40.762980+00:00",
   "total_alerts": 0,
   "scan_universe": 491,
   "momentum_threshold_pct": 3.0,
@@ -46,16 +46,16 @@
       "weekly_pct": 1.77
     },
     {
+      "sector": "XLRE",
+      "weekly_pct": 0.29
+    },
+    {
       "sector": "XLV",
       "weekly_pct": -1.05
     },
     {
       "sector": "XLE",
       "weekly_pct": -3.54
-    },
-    {
-      "sector": "XLRE",
-      "weekly_pct": NaN
     },
     {
       "sector": "XLC",
