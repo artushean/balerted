@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-07-25T18:40:04.447136+00:00",
+  "last_updated": "2026-07-25T20:16:43.218202+00:00",
   "total_alerts": 0,
   "scan_universe": 491,
   "momentum_threshold_pct": 3.0,
@@ -18,8 +18,20 @@
   },
   "sector_momentum": [
     {
+      "sector": "XLF",
+      "weekly_pct": NaN
+    },
+    {
       "sector": "XLE",
       "weekly_pct": 3.36
+    },
+    {
+      "sector": "XLP",
+      "weekly_pct": -1.24
+    },
+    {
+      "sector": "XLB",
+      "weekly_pct": NaN
     },
     {
       "sector": "XLU",
@@ -28,10 +40,6 @@
     {
       "sector": "XLI",
       "weekly_pct": 1.81
-    },
-    {
-      "sector": "XLB",
-      "weekly_pct": 1.44
     },
     {
       "sector": "XLRE",
@@ -44,14 +52,6 @@
     {
       "sector": "XLK",
       "weekly_pct": 0.17
-    },
-    {
-      "sector": "XLF",
-      "weekly_pct": 0.09
-    },
-    {
-      "sector": "XLP",
-      "weekly_pct": -1.24
     },
     {
       "sector": "XLC",
