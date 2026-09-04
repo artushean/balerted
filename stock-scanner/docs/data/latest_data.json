@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-09-04T20:29:08.631517+00:00",
+  "last_updated": "2026-09-04T22:39:18.534454+00:00",
   "total_alerts": 0,
   "scan_universe": 491,
   "momentum_threshold_pct": 3.0,
@@ -23,7 +23,7 @@
     },
     {
       "sector": "XLK",
-      "weekly_pct": 0.87
+      "weekly_pct": 0.86
     },
     {
       "sector": "XLU",
